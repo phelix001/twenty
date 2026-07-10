@@ -258,14 +258,18 @@ export const SettingsSecurityAuthProvidersOptionsList = () => {
                 Icon={IconList}
                 title={t`Discovery on ${defaultDomain}`}
                 description={getDiscoverabilityDescription(
-                  currentWorkspace.workspaceDiscoverability,
+                  currentWorkspace.workspaceDiscoverability ??
+                    WorkspaceDiscoverability.PUBLIC,
                 )}
                 divider
               >
                 <Select<WorkspaceDiscoverability>
                   dropdownId="workspace-discoverability-select"
                   dropdownWidth={220}
-                  value={currentWorkspace.workspaceDiscoverability}
+                  value={
+                    currentWorkspace.workspaceDiscoverability ??
+                    WorkspaceDiscoverability.PUBLIC
+                  }
                   onChange={handleDiscoverabilityChange}
                   options={discoverabilityOptions}
                   selectSizeVariant="small"

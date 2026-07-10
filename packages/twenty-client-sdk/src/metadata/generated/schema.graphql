@@ -873,7 +873,7 @@ type Workspace {
   updatedAt: DateTime!
   allowImpersonation: Boolean!
   isPublicInviteLinkEnabled: Boolean!
-  workspaceDiscoverability: WorkspaceDiscoverability!
+  workspaceDiscoverability: WorkspaceDiscoverability
   trashRetentionDays: Float!
   eventLogRetentionDays: Float!
   workspaceMembersCount: Float
