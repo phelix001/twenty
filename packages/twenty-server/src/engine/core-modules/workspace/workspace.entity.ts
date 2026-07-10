@@ -119,7 +119,7 @@ export class WorkspaceEntity {
   @Column({ default: true })
   isPublicInviteLinkEnabled: boolean;
 
-  @Field(() => WorkspaceDiscoverability, { nullable: true })
+  @Field(() => WorkspaceDiscoverability)
   @WasIntroducedInUpgrade({
     upgradeCommandName:
       ADD_WORKSPACE_DISCOVERABILITY_TO_WORKSPACE_UPGRADE_COMMAND_NAME,
