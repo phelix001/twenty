@@ -264,6 +264,7 @@ describe('ServerFileStorageService', () => {
       mockServerFileRepository.findOneBy.mockResolvedValue({
         id: 'server-file-id',
         path: 'application-registration/registration-id/manifest.json',
+        mimeType: 'application/json',
       } as FileEntity);
       mockDriver.readFile.mockResolvedValue(stream);
 
@@ -277,7 +278,7 @@ describe('ServerFileStorageService', () => {
         filePath:
           'server/application-registration/registration-id/manifest.json',
       });
-      expect(result).toBe(stream);
+      expect(result).toEqual({ stream, mimeType: 'application/json' });
     });
 
     it('should throw a missing-file exception when the row does not exist', async () => {

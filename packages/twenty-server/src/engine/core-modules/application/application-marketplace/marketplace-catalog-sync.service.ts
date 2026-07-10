@@ -3,7 +3,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ApplicationRegistrationService } from 'src/engine/core-modules/application/application-registration/application-registration.service';
 import { ApplicationRegistrationSourceType } from 'src/engine/core-modules/application/application-registration/enums/application-registration-source-type.enum';
 import { MarketplaceService } from 'src/engine/core-modules/application/application-marketplace/marketplace.service';
-import { ManifestAssetUrlResolverService } from 'src/engine/core-modules/application/application-registration/manifest-asset-url-resolver.service';
 
 @Injectable()
 export class MarketplaceCatalogSyncService {
@@ -12,7 +11,6 @@ export class MarketplaceCatalogSyncService {
   constructor(
     private readonly applicationRegistrationService: ApplicationRegistrationService,
     private readonly marketplaceService: MarketplaceService,
-    private readonly manifestAssetUrlResolverService: ManifestAssetUrlResolverService,
   ) {}
 
   async syncCatalog(): Promise<void> {
@@ -43,20 +41,15 @@ export class MarketplaceCatalogSyncService {
         const universalIdentifier =
           fetchedManifest.application.universalIdentifier;
 
-        const manifestWithResolvedUrls =
-          this.manifestAssetUrlResolverService.resolveFromRegistrySource({
-            manifest: fetchedManifest,
-            packageName: pkg.name,
-            version: pkg.version,
-          });
-
+        // Asset paths are kept as-is: display URLs for NPM registrations are
+        // resolved against the registry CDN at query time.
         await this.applicationRegistrationService.upsertFromCatalog({
           universalIdentifier,
           name: fetchedManifest.application.displayName ?? pkg.name,
           sourceType: ApplicationRegistrationSourceType.NPM,
           sourcePackage: pkg.name,
           latestAvailableVersion: pkg.version ?? null,
-          manifest: manifestWithResolvedUrls,
+          manifest: fetchedManifest,
         });
       } catch (error) {
         this.logger.error(

@@ -11,6 +11,7 @@ import { v4 } from 'uuid';
 
 import { ALL_OAUTH_SCOPES } from 'src/engine/core-modules/application/application-oauth/constants/oauth-scopes';
 import { shouldRefreshApplicationRegistrationOnInstall } from 'src/engine/core-modules/application/application-install/utils/should-refresh-application-registration-on-install.util';
+import { ApplicationRegistrationAssetUrlService } from 'src/engine/core-modules/application/application-registration/application-registration-asset-url.service';
 import { CacheLockService } from 'src/engine/core-modules/cache-lock/cache-lock.service';
 import { ApplicationRegistrationEntity } from 'src/engine/core-modules/application/application-registration/application-registration.entity';
 import { TWENTY_CLI_APPLICATION_REGISTRATION } from 'src/engine/workspace-manager/twenty-standard-application/constants/twenty-cli-application-registration.constant';
@@ -56,6 +57,7 @@ const APPLICATION_REGISTRATION_WITHOUT_MANIFEST_SELECT: (keyof ApplicationRegist
     'isVetted',
     'isPreInstalled',
     'logo',
+    'logoFileId',
     'description',
     'author',
     'category',
@@ -94,6 +96,7 @@ export class ApplicationRegistrationService {
     @InjectRepository(WorkspaceEntity)
     private readonly workspaceRepository: Repository<WorkspaceEntity>,
     private readonly applicationRegistrationVariableService: ApplicationRegistrationVariableService,
+    private readonly applicationRegistrationAssetUrlService: ApplicationRegistrationAssetUrlService,
     private readonly cacheLockService: CacheLockService,
     private readonly coreEntityCacheService: CoreEntityCacheService,
   ) {}
@@ -176,7 +179,17 @@ export class ApplicationRegistrationService {
   ): Promise<PublicApplicationRegistrationDTO | null> {
     const registration = await this.applicationRegistrationRepository.findOne({
       where: { oAuthClientId: clientId },
-      select: ['id', 'name', 'logo', 'websiteUrl', 'oAuthScopes'],
+      select: [
+        'id',
+        'name',
+        'logo',
+        'logoFileId',
+        'sourceType',
+        'sourcePackage',
+        'latestAvailableVersion',
+        'websiteUrl',
+        'oAuthScopes',
+      ],
     });
 
     if (!registration) {
@@ -186,7 +199,8 @@ export class ApplicationRegistrationService {
     return {
       id: registration.id,
       name: registration.name,
-      logoUrl: registration.logo,
+      logoUrl:
+        this.applicationRegistrationAssetUrlService.buildLogoUrl(registration),
       websiteUrl: registration.websiteUrl,
       oAuthScopes: registration.oAuthScopes,
     };
@@ -340,11 +354,28 @@ export class ApplicationRegistrationService {
         return;
       }
 
+      const displayFields = fromManifestApplicationToDisplayFields(
+        manifest.application,
+      );
+
+      // Gallery image files are stored by the source-specific flows (tarball
+      // upload, dev sync); keep their fileIds for paths that did not change.
+      const existingFileIdByPath = new Map(
+        (existing.galleryImages ?? []).map(({ path, fileId }) => [
+          path,
+          fileId,
+        ]),
+      );
+
       await this.applicationRegistrationRepository.save({
         ...existing,
         name: manifest.application.displayName,
         manifest,
-        ...fromManifestApplicationToDisplayFields(manifest.application),
+        ...displayFields,
+        galleryImages: displayFields.galleryImages.map((galleryImage) => ({
+          ...galleryImage,
+          fileId: existingFileIdByPath.get(galleryImage.path) ?? null,
+        })),
         ...(sourceType !== undefined && { sourceType }),
         ...(latestAvailableVersion !== undefined && {
           latestAvailableVersion,
@@ -503,9 +534,12 @@ export class ApplicationRegistrationService {
         'id',
         'universalIdentifier',
         'name',
+        'sourceType',
         'sourcePackage',
+        'latestAvailableVersion',
         'isVetted',
         'logo',
+        'logoFileId',
         'description',
         'author',
         'category',
@@ -525,7 +559,8 @@ export class ApplicationRegistrationService {
       description: registration.description,
       author: registration.author,
       category: registration.category,
-      logoUrl: registration.logo,
+      logoUrl:
+        this.applicationRegistrationAssetUrlService.buildLogoUrl(registration),
     }));
   }
 

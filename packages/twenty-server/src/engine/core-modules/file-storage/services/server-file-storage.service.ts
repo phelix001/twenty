@@ -148,14 +148,18 @@ export class ServerFileStorageService {
     return driver.readFile({ filePath: onStorageFilePath });
   }
 
-  async readServerFileById(id: string): Promise<Readable> {
+  async readServerFileById(
+    id: string,
+  ): Promise<{ stream: Readable; mimeType: string }> {
     const serverFile = await this.findServerFileByIdOrThrow(id);
 
     const driver = this.fileStorageDriverFactory.getCurrentDriver();
 
-    return driver.readFile({
+    const stream = await driver.readFile({
       filePath: this.buildServerOnStorageFilePath(serverFile),
     });
+
+    return { stream, mimeType: serverFile.mimeType };
   }
 
   checkServerFileExists({
