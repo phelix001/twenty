@@ -184,6 +184,7 @@ export enum AiModelRole {
 export type ApplicationRegistration = {
   __typename?: 'ApplicationRegistration';
   createdAt: Scalars['DateTime']['output'];
+  galleryImages: Array<Scalars['String']['output']>;
   id: Scalars['UUID']['output'];
   isConfigured: Scalars['Boolean']['output'];
   isListed: Scalars['Boolean']['output'];

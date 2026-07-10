@@ -10,6 +10,7 @@ jest.mock('node:stream/promises', () => ({
   pipeline: jest.fn(),
 }));
 
+import { ServerFileStorageService } from 'src/engine/core-modules/file-storage/services/server-file-storage.service';
 import {
   FileException,
   FileExceptionCode,
@@ -63,6 +64,12 @@ describe('FileController', () => {
             getFileStreamById: jest.fn(),
             getFilePresignedUrlOrStreamByPath: jest.fn(),
             getFilePresignedUrlOrStreamById: jest.fn(),
+          },
+        },
+        {
+          provide: ServerFileStorageService,
+          useValue: {
+            readServerFileById: jest.fn(),
           },
         },
       ],
